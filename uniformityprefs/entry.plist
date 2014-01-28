@@ -1,0 +1,10 @@
+{
+	entry = {
+		bundle = UniformityPrefs;
+		cell = PSLinkCell;
+		detail = "UniformityPrefsListController";
+		icon = "Uniformity.png";
+		isController = 1;
+		label = Uniformity;
+	};
+}
