@@ -90,6 +90,30 @@
 			<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>label</key>
+			<string>Disabled toggle opacity</string>
+		</dict>
+		<dict>
+			<key>showValue</key>
+			<true/>
+			<key>max</key>
+			<integer>1</integer>
+			<key>min</key>
+			<integer>0</integer>
+			<key>PostNotification</key>
+			<string>com.pNre.uniformity/settingsupdated</string>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>default</key>
+			<real>0.1</real>
+			<key>defaults</key>
+			<string>com.pNre.uniformity</string>
+			<key>key</key>
+			<string>CCContentDisabledAlpha</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
 			<string>Tint opacity</string>
 		</dict>
 		<dict>
@@ -145,6 +169,22 @@
 			<string>Tint color</string>
 			<key>detail</key>
 			<string>UniformityColorSelectorCCTint</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>Uniformity (http://repo.pnre.co)</string>
+			<key>isStaticText</key>
+			<true/>
+		</dict>
+		<dict>
+			<key>action</key>
+			<string>twitter</string>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Twitter @_pNre</string>
 		</dict>
 	</array>
 	<key>title</key>

@@ -8,6 +8,7 @@ static BOOL STCCUseNotificationCenterStyle = NO;
 
 static CGFloat STCCContentNormalAlpha = 0.4;
 static CGFloat STCCContentHighlightedAlpha = 0.8;
+static CGFloat STCCContentDisabledAlpha = 0.1;
 static CGFloat STCCTintAlpha = 0.1;
 
 static UIColor * STCCForegroundColor = nil;
@@ -119,22 +120,24 @@ CGFloat PN_SBUIControlCenterControlAlphaForState(int state) {
     if (!STTweakEnabled)
         return original__SBUIControlCenterControlAlphaForState(state);
 
-    return state == UIControlStateHighlighted ? STCCContentHighlightedAlpha : STCCContentNormalAlpha;
+    if (state == UIControlStateHighlighted)
+        return STCCContentHighlightedAlpha;
+    else if (state == UIControlStateDisabled)
+        return STCCContentDisabledAlpha;
+    else 
+        return STCCContentNormalAlpha;
 
 }
 
 UIColor * PN_SBUIControlCenterControlColorForState(int state) {
 
-    BOOL noColors = !STCCForegroundColor;
-
-    if (!STTweakEnabled || noColors)
+    if (!STTweakEnabled)
         return original__SBUIControlCenterControlColorForState(state);
 
     if (state == UIControlStateHighlighted) {
         return STCCHighlightColor ?: original__SBUIControlCenterControlColorForState(state);
-    }
-
-    return STCCForegroundColor ?: original__SBUIControlCenterControlColorForState(state);
+    } else 
+        return STCCForegroundColor ?: original__SBUIControlCenterControlColorForState(state);
 
 }
 
@@ -195,6 +198,9 @@ static void reloadSettings() {
     if ([_settingsPlist objectForKey:@"CCContentHighlightedAlpha"])
         STCCContentHighlightedAlpha = [[_settingsPlist objectForKey:@"CCContentHighlightedAlpha"] floatValue];
     
+    if ([_settingsPlist objectForKey:@"CCContentDisabledAlpha"])
+        STCCContentDisabledAlpha = [[_settingsPlist objectForKey:@"CCContentDisabledAlpha"] floatValue];
+
     if ([_settingsPlist objectForKey:@"CCTintAlpha"])
         STCCTintAlpha = [[_settingsPlist objectForKey:@"CCTintAlpha"] floatValue];
 
