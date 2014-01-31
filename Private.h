@@ -28,6 +28,12 @@
 
 @end
 
+@interface SBControlCenterSettings : NSObject
+
+@property BOOL highlightUsesPlusL;
+
+@end
+
 @interface SBControlCenterContentContainerView : UIView {
     _UIBackdropView * _backdropView;
 }

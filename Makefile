@@ -10,6 +10,7 @@ TWEAK_NAME = Uniformity
 Uniformity_FILES = Tweak.xm UIImage+Colorize.m
 Uniformity_FRAMEWORKS = UIKit CoreGraphics QuartzCore
 Uniformity_PRIVATE_FRAMEWORKS = SpringBoardUI
+Uniformity_LIBRARIES = substrate
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 

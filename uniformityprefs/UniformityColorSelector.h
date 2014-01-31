@@ -4,6 +4,7 @@
 }
 
 - (NSString *)colorSettingKeyName;
+- (NSString *)defaultColorName;
 
 @end
 

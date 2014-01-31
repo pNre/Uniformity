@@ -37,9 +37,13 @@ extern NSString * PSValueKey;
     return @"Color";
 }
 
+- (NSString *)defaultColorName {
+    return @"Default color";
+}
+
 - (PSSpecifier *)defaultColorSpecifier {
 
-    PSSpecifier * specifier = [PSSpecifier preferenceSpecifierNamed:@"Default color"
+    PSSpecifier * specifier = [PSSpecifier preferenceSpecifierNamed:[self defaultColorName]
                                                     target:self
                                                        set:nil
                                                        get:nil

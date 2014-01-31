@@ -1,7 +1,10 @@
+#import <substrate.h>
 #import <UIKit/UIKit.h>
+
 #import "UIImage+Colorize.h"
 #import "Private.h"
 
+static BOOL SettingsLoaded = NO;
 static BOOL STTweakEnabled = YES;
 
 static BOOL STCCUseNotificationCenterStyle = NO;
@@ -18,13 +21,13 @@ static UIColor * STCCTintColor = nil;
 #define kBackdropNCStyle 0x2B2A
 #define kBackdropCCStyle 0x080C
 
-extern "C" void      _SBControlCenterControlSettingsDidChangeForKey(NSString * key);
-extern "C" UIColor * _SBUIControlCenterControlColorForState(int state);
-extern "C" NSInteger _SBUIControlCenterControlBlendModeForState(int state);
-extern "C" CGFloat   _SBUIControlCenterControlAlphaForState(int state);
+extern "C" void                      _SBControlCenterControlSettingsDidChangeForKey(NSString * key);
+extern "C" UIColor *                 _SBUIControlCenterControlColorForState(int state);
+extern "C" NSInteger                 _SBUIControlCenterControlBlendModeForState(int state);
+extern "C" CGFloat                   _SBUIControlCenterControlAlphaForState(int state);
+extern "C" SBControlCenterSettings * _SBControlCenterSettings(void);
 
 static UIColor * (*original__SBUIControlCenterControlColorForState)(int state);
-static NSInteger (*original__SBUIControlCenterControlBlendModeForState)(int state);
 static CGFloat   (*original__SBUIControlCenterControlAlphaForState)(int state);
 
 %hook SBUIControlCenterSlider
@@ -49,44 +52,58 @@ void SBControlCenterContentContainerViewReplaceBackdrop(SBControlCenterContentCo
     if (!_originalBackdrop)
         return;
 
-    BOOL __useNotificationCenterStyle = STCCUseNotificationCenterStyle;
+    BOOL reloadBackdrop = NO;
+    BOOL _useNCStyle = STCCUseNotificationCenterStyle;
 
-    if (STTweakEnabled && [_originalBackdrop groupName] && [[_originalBackdrop groupName] isEqualToString:@"PNCustomBackdrop"] && __useNotificationCenterStyle) {
+    if ([_originalBackdrop groupName] && [[_originalBackdrop groupName] isEqualToString:@"PNCustomBackdrop"]) {
         
-        [[_originalBackdrop inputSettings] setColorTint:STCCTintColor];
-        [[_originalBackdrop inputSettings] setColorTintAlpha:STCCTintAlpha];
+        if (STTweakEnabled) {
 
-        return;
-
-    } else if ([_originalBackdrop groupName] && [[_originalBackdrop groupName] isEqualToString:@"ControlCenter"] && !__useNotificationCenterStyle)
-        return;
-
-    if (!STTweakEnabled && (![_originalBackdrop groupName] || ![[_originalBackdrop groupName] isEqualToString:@"ControlCenter"]))
-        __useNotificationCenterStyle = NO;
-
-    [_originalBackdrop removeFromSuperview];
-    [_originalBackdrop release];
-
-    if (__useNotificationCenterStyle) {
-
-        _originalBackdrop = [[_UIBackdropView alloc] initWithPrivateStyle:kBackdropNCStyle];
-        [_originalBackdrop setGroupName:@"PNCustomBackdrop"];
-
-        if (STCCTintColor) {
             [[_originalBackdrop inputSettings] setColorTint:STCCTintColor];
             [[_originalBackdrop inputSettings] setColorTintAlpha:STCCTintAlpha];
+
+            reloadBackdrop = !STCCUseNotificationCenterStyle;
+
+        } else {
+
+            reloadBackdrop = YES;
+            _useNCStyle = NO;
+
         }
 
-    } else {
+    } else if ([_originalBackdrop groupName] && [[_originalBackdrop groupName] isEqualToString:@"ControlCenter"]) {
 
-        _originalBackdrop = [[_UIBackdropView alloc] initWithPrivateStyle:kBackdropCCStyle];
-        [_originalBackdrop setGroupName:@"ControlCenter"];
+        reloadBackdrop = STCCUseNotificationCenterStyle && STTweakEnabled;
 
     }
-    
-    [_originalBackdrop setAppliesOutputSettingsAnimationDuration:1.0];
 
-    [view insertSubview:_originalBackdrop atIndex:0];
+    if (reloadBackdrop) {
+
+        [_originalBackdrop removeFromSuperview];
+        [_originalBackdrop release];
+
+        if (_useNCStyle) {
+
+            _originalBackdrop = [[_UIBackdropView alloc] initWithPrivateStyle:kBackdropNCStyle];
+            [_originalBackdrop setGroupName:@"PNCustomBackdrop"];
+
+            if (STCCTintColor) {
+                [[_originalBackdrop inputSettings] setColorTint:STCCTintColor];
+                [[_originalBackdrop inputSettings] setColorTintAlpha:STCCTintAlpha];
+            }
+
+        } else {
+
+            _originalBackdrop = [[_UIBackdropView alloc] initWithPrivateStyle:kBackdropCCStyle];
+            [_originalBackdrop setGroupName:@"ControlCenter"];
+
+        }
+        
+        [_originalBackdrop setAppliesOutputSettingsAnimationDuration:1.0];
+
+        [view insertSubview:_originalBackdrop atIndex:0];
+
+    }
 
 
 }
@@ -115,7 +132,7 @@ void SBControlCenterContentContainerViewReplaceBackdrop(SBControlCenterContentCo
 
     self = %orig;
 
-    if (self && STTweakEnabled) {
+    if (self && STTweakEnabled && [self chevronView]) {
         [[self chevronView] setColor:[UIColor colorWithWhite:0.52 alpha:1.]];
         [[self chevronView] _setDrawsAsBackdropOverlayWithBlendMode:kCGBlendModeOverlay];
     }
@@ -128,7 +145,7 @@ void SBControlCenterContentContainerViewReplaceBackdrop(SBControlCenterContentCo
 
 CGFloat PN_SBUIControlCenterControlAlphaForState(int state) {
 
-    if (!STTweakEnabled)
+    if (!STTweakEnabled || !SettingsLoaded)
         return original__SBUIControlCenterControlAlphaForState(state);
 
     if (state == UIControlStateHighlighted)
@@ -142,7 +159,7 @@ CGFloat PN_SBUIControlCenterControlAlphaForState(int state) {
 
 UIColor * PN_SBUIControlCenterControlColorForState(int state) {
 
-    if (!STTweakEnabled)
+    if (!STTweakEnabled || !SettingsLoaded)
         return original__SBUIControlCenterControlColorForState(state);
 
     if (state == UIControlStateHighlighted) {
@@ -154,8 +171,25 @@ UIColor * PN_SBUIControlCenterControlColorForState(int state) {
 
 NSInteger PN_SBUIControlCenterControlBlendModeForState(int state) {
 
-    if (!STTweakEnabled)
-        return original__SBUIControlCenterControlBlendModeForState(state);
+    if (STTweakEnabled && SettingsLoaded)
+        return kCGBlendModeNormal;
+
+    if (state == UIControlStateNormal || state == UIControlStateDisabled) {
+        
+        CGFloat scale = [[UIScreen mainScreen] scale];
+
+        if (scale >= 2.) {
+            return kCGBlendModeMultiply;
+        }
+
+    } else if (state == UIControlStateHighlighted) {
+
+        SBControlCenterSettings * settings = _SBControlCenterSettings();
+
+        if ([settings highlightUsesPlusL])
+            return kCGBlendModeScreen;
+
+    }
 
     return kCGBlendModeNormal;
 
@@ -251,6 +285,8 @@ static void reloadSettings() {
 
     }
 
+    SettingsLoaded = YES;
+
     applyChanges();
 
 }
@@ -262,8 +298,8 @@ static void reloadSettingsNotification(CFNotificationCenterRef notificationCente
 
 %ctor {
 
+    MSHookFunction((void *)_SBUIControlCenterControlBlendModeForState, (void *)PN_SBUIControlCenterControlBlendModeForState, (void **)NULL);
     MSHookFunction(_SBUIControlCenterControlColorForState, PN_SBUIControlCenterControlColorForState, &original__SBUIControlCenterControlColorForState);
-    MSHookFunction(_SBUIControlCenterControlBlendModeForState, PN_SBUIControlCenterControlBlendModeForState, &original__SBUIControlCenterControlBlendModeForState);
     MSHookFunction(_SBUIControlCenterControlAlphaForState, PN_SBUIControlCenterControlAlphaForState, &original__SBUIControlCenterControlAlphaForState);
     
     NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];

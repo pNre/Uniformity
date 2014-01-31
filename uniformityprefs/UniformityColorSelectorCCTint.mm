@@ -7,4 +7,8 @@
     return @"CCTintColor";
 }
 
+- (NSString *)defaultColorName {
+    return @"None";
+}
+
 @end
