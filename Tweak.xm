@@ -42,17 +42,12 @@ static CGFloat   (*original__SBUIControlCenterControlAlphaForState)(int state);
 
 %end
 
-%hook SBUIControlCenterButton
-
-- (void)setAlpha:(CGFloat)alpha {
-    %orig;
-}
-
-%end
-
 void SBControlCenterContentContainerViewReplaceBackdrop(SBControlCenterContentContainerView * view) {
 
     _UIBackdropView * &_originalBackdrop = MSHookIvar<_UIBackdropView *>(view, "_backdropView");
+
+    if (!_originalBackdrop)
+        return;
 
     BOOL __useNotificationCenterStyle = STCCUseNotificationCenterStyle;
 
@@ -66,10 +61,8 @@ void SBControlCenterContentContainerViewReplaceBackdrop(SBControlCenterContentCo
     } else if ([_originalBackdrop groupName] && [[_originalBackdrop groupName] isEqualToString:@"ControlCenter"] && !__useNotificationCenterStyle)
         return;
 
-    if (!STTweakEnabled && ![[_originalBackdrop groupName] isEqualToString:@"ControlCenter"])
+    if (!STTweakEnabled && (![_originalBackdrop groupName] || ![[_originalBackdrop groupName] isEqualToString:@"ControlCenter"]))
         __useNotificationCenterStyle = NO;
-
-    UIView * parent = [_originalBackdrop superview];
 
     [_originalBackdrop removeFromSuperview];
     [_originalBackdrop release];
@@ -93,7 +86,8 @@ void SBControlCenterContentContainerViewReplaceBackdrop(SBControlCenterContentCo
     
     [_originalBackdrop setAppliesOutputSettingsAnimationDuration:1.0];
 
-    [parent insertSubview:_originalBackdrop atIndex:0];
+    [view insertSubview:_originalBackdrop atIndex:0];
+
 
 }
 
@@ -107,6 +101,23 @@ void SBControlCenterContentContainerViewReplaceBackdrop(SBControlCenterContentCo
 
         SBControlCenterContentContainerViewReplaceBackdrop(self);
 
+    }
+
+    return self;
+
+}
+
+%end
+
+%hook SBControlCenterGrabberView
+
+- (SBControlCenterGrabberView *)initWithFrame:(CGRect)frame {
+
+    self = %orig;
+
+    if (self && STTweakEnabled) {
+        [[self chevronView] setColor:[UIColor colorWithWhite:0.52 alpha:1.]];
+        [[self chevronView] _setDrawsAsBackdropOverlayWithBlendMode:kCGBlendModeOverlay];
     }
 
     return self;
@@ -167,17 +178,12 @@ static void applyChanges() {
 
             SBControlCenterContentContainerViewReplaceBackdrop(contentContainerView);
 
-            SBControlCenterContentView * _contentView = MSHookIvar<SBControlCenterContentView *>(_viewController, "_contentView");
-            SBControlCenterGrabberView * grabberView = [_contentView grabberView];
-            SBChevronView * chevronView = [grabberView chevronView];
-
-            chevronView.color = STCCForegroundColor ?: PN_SBUIControlCenterControlColorForState(UIControlStateNormal);
-
         }
 
     }
 
     _SBControlCenterControlSettingsDidChangeForKey(@"highlight");
+    _SBControlCenterControlSettingsDidChangeForKey(@"highlightColor");
     _SBControlCenterControlSettingsDidChangeForKey(@"controlAlpha");
 
 }

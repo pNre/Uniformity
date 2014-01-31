@@ -1,3 +1,9 @@
+@interface UIView (Blend)
+
+- (void)_setDrawsAsBackdropOverlayWithBlendMode:(CGBlendMode)blendMode;
+
+@end
+
 @interface _UIBackdropViewSettings : NSObject
 
 - (void)setColorTintAlpha:(CGFloat)alpha;
