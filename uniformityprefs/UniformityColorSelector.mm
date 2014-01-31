@@ -2,6 +2,7 @@
 #import "UniformityColorSelector.h"
 
 #import "UIColor+Crayola.h"
+#import "UIColor+Compare.h"
 
 extern NSString * PSValueKey;
 
@@ -152,8 +153,6 @@ extern NSString * PSValueKey;
         NSDictionary * crayola = [UIColor crayolaColors];
         NSArray * sortedColors = [[crayola allKeys] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
 
-        //[[UIColor crayolaColors] enumerateKeysAndObjectsUsingBlock: ^(id key, id obj, BOOL * stop) {
-
         for (NSString * key in sortedColors) {
 
             id obj = [crayola objectForKey:key];
@@ -175,7 +174,6 @@ extern NSString * PSValueKey;
             [(NSMutableArray *)_specifiers addObject:specifier];
 
         }
-        //}];
 
     }
 
@@ -190,8 +188,16 @@ extern NSString * PSValueKey;
 
     id preferenceValue = [self readPreferenceValue:cellSpecifier];
     UIColor * color = [NSKeyedUnarchiver unarchiveObjectWithData:preferenceValue];
+    UIColor * cellColor = [cellSpecifier propertyForKey:@"color"];
 
-    BOOL checked = [[cellSpecifier propertyForKey:@"color"] isEqual:color];
+    BOOL checked = NO;
+
+    if ([cellColor isKindOfClass:[UIColor class]] &&
+        [color isKindOfClass:[UIColor class]])
+        checked = [cellColor PN_isEqualToColor:color];
+    else
+        checked = [color isEqual:cellColor];
+
     [(PSTableCell *)cell setChecked:checked];
 
     return cell;
