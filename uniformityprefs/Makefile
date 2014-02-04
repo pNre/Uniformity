@@ -6,7 +6,7 @@ export ARCHS = armv7 armv7s arm64
 
 BUNDLE_NAME = UniformityPrefs
 UniformityPrefs_FILES = UniformityPrefs.mm UIColor+Crayola.m UIColor+Compare.m \
-	UniformityColorSelectorCCForeground.mm UniformityColorSelectorCCHighlight.mm UniformityColorSelectorCCTint.mm UniformityColorSelector.mm
+	UniformityColorSelectorCCForeground.mm UniformityColorSelectorCCHighlight.mm UniformityColorSelectorCCTint.mm UniformityColorSelectorCCGrabberTint.mm UniformityColorSelector.mm
 UniformityPrefs_INSTALL_PATH = /Library/PreferenceBundles
 UniformityPrefs_FRAMEWORKS = UIKit CoreGraphics
 UniformityPrefs_PRIVATE_FRAMEWORKS = Preferences

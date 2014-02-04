@@ -4,10 +4,20 @@
 #import "UIImage+Colorize.h"
 #import "Private.h"
 
+enum {
+
+    CCGrabberStyleDefault = 0,
+    CCGrabberStyleNC,
+    CCGrabberStyleTint,
+    CCGrabberStyleHidden
+
+};
+
 static BOOL SettingsLoaded = NO;
 static BOOL STTweakEnabled = YES;
 
 static BOOL STCCUseNotificationCenterStyle = NO;
+static NSUInteger STCCGrabberStyle = CCGrabberStyleNC;
 
 static CGFloat STCCContentNormalAlpha = 0.4;
 static CGFloat STCCContentHighlightedAlpha = 0.8;
@@ -17,6 +27,7 @@ static CGFloat STCCTintAlpha = 0.1;
 static UIColor * STCCForegroundColor = nil;
 static UIColor * STCCHighlightColor = nil;
 static UIColor * STCCTintColor = nil;
+static UIColor * STCCGrabberTintColor = nil;
 
 #define kBackdropNCStyle 0x2B2A
 #define kBackdropCCStyle 0x080C
@@ -29,6 +40,19 @@ extern "C" SBControlCenterSettings * _SBControlCenterSettings(void);
 
 static UIColor * (*original__SBUIControlCenterControlColorForState)(int state);
 static CGFloat   (*original__SBUIControlCenterControlAlphaForState)(int state);
+
+%hook SBControlCenterSettings
+
+- (BOOL)backgroundDarkensCC {
+
+    if (!STTweakEnabled)
+        return %orig;
+
+    return NO;
+
+}
+
+%end
 
 %hook SBUIControlCenterSlider
 
@@ -55,12 +79,12 @@ void SBControlCenterContentContainerViewReplaceBackdrop(SBControlCenterContentCo
     BOOL reloadBackdrop = NO;
     BOOL _useNCStyle = STCCUseNotificationCenterStyle;
 
+    [[_originalBackdrop inputSettings] setColorTint:STCCTintColor];
+    [[_originalBackdrop inputSettings] setColorTintAlpha:STCCTintAlpha];
+
     if ([_originalBackdrop groupName] && [[_originalBackdrop groupName] isEqualToString:@"PNCustomBackdrop"]) {
         
         if (STTweakEnabled) {
-
-            [[_originalBackdrop inputSettings] setColorTint:STCCTintColor];
-            [[_originalBackdrop inputSettings] setColorTintAlpha:STCCTintAlpha];
 
             reloadBackdrop = !STCCUseNotificationCenterStyle;
 
@@ -105,7 +129,6 @@ void SBControlCenterContentContainerViewReplaceBackdrop(SBControlCenterContentCo
 
     }
 
-
 }
 
 %hook SBControlCenterContentContainerView
@@ -114,7 +137,7 @@ void SBControlCenterContentContainerViewReplaceBackdrop(SBControlCenterContentCo
 
     self = %orig;
 
-    if (self && STTweakEnabled && STCCUseNotificationCenterStyle) {
+    if (self && STTweakEnabled) {
 
         SBControlCenterContentContainerViewReplaceBackdrop(self);
 
@@ -128,13 +151,43 @@ void SBControlCenterContentContainerViewReplaceBackdrop(SBControlCenterContentCo
 
 %hook SBControlCenterGrabberView
 
+static void SBControlCenterGrabberViewStyle(SBChevronView * chevronView) {
+
+    if (!chevronView)
+        return;
+
+    if (STCCGrabberStyle == CCGrabberStyleTint && !STCCGrabberTintColor)
+        STCCGrabberStyle = CCGrabberStyleDefault;
+
+    [chevronView setHidden:NO];
+
+    switch (STCCGrabberStyle) {
+        case CCGrabberStyleNC:
+            [chevronView setColor:[UIColor colorWithWhite:0.52 alpha:1.]];
+            [chevronView _setDrawsAsBackdropOverlayWithBlendMode:kCGBlendModeOverlay];
+        break;
+        case CCGrabberStyleTint:
+            [chevronView setColor:STCCGrabberTintColor];
+            [chevronView _setDrawsAsBackdropOverlayWithBlendMode:kCGBlendModeNormal];
+        break;
+        case CCGrabberStyleHidden:
+            [chevronView setHidden:YES];
+        break;
+        default:
+            [chevronView setColor:_SBUIControlCenterControlColorForState(UIControlStateNormal)];
+            [chevronView _setDrawsAsBackdropOverlayWithBlendMode:kCGBlendModeNormal];
+    }
+
+}
+
 - (SBControlCenterGrabberView *)initWithFrame:(CGRect)frame {
 
     self = %orig;
 
     if (self && STTweakEnabled && [self chevronView]) {
-        [[self chevronView] setColor:[UIColor colorWithWhite:0.52 alpha:1.]];
-        [[self chevronView] _setDrawsAsBackdropOverlayWithBlendMode:kCGBlendModeOverlay];
+
+        SBControlCenterGrabberViewStyle([self chevronView]);
+
     }
 
     return self;
@@ -212,6 +265,11 @@ static void applyChanges() {
 
             SBControlCenterContentContainerViewReplaceBackdrop(contentContainerView);
 
+            SBControlCenterContentView * _contentView = MSHookIvar<SBControlCenterContentView *>(_viewController, "_contentView");
+
+            if (_contentView && [_contentView grabberView])
+                SBControlCenterGrabberViewStyle([[_contentView grabberView] chevronView]);
+
         }
 
     }
@@ -231,6 +289,9 @@ static void reloadSettings() {
 
     if ([_settingsPlist objectForKey:@"CCUseNotificationCenterStyle"])
         STCCUseNotificationCenterStyle = [[_settingsPlist objectForKey:@"CCUseNotificationCenterStyle"] boolValue];
+    
+    if ([_settingsPlist objectForKey:@"CCGrabberStyle"])
+        STCCGrabberStyle = [[_settingsPlist objectForKey:@"CCGrabberStyle"] integerValue];
 
     if ([_settingsPlist objectForKey:@"CCContentNormalAlpha"])
         STCCContentNormalAlpha = [[_settingsPlist objectForKey:@"CCContentNormalAlpha"] floatValue];
@@ -252,7 +313,7 @@ static void reloadSettings() {
         STCCForegroundColor = [NSKeyedUnarchiver unarchiveObjectWithData:[_settingsPlist objectForKey:@"CCForegroundColor"]];
         
         if ([STCCForegroundColor isKindOfClass:[NSNull class]])
-            STCCForegroundColor = nil;
+            STCCForegroundColor = STTweakEnabled && STCCUseNotificationCenterStyle ? [[UIColor colorWithWhite:0.90 alpha:1.] retain] : nil;
         else
             [STCCForegroundColor retain];
 
@@ -282,6 +343,19 @@ static void reloadSettings() {
             STCCTintColor = nil;
         else
             [STCCTintColor retain];
+
+    }
+
+    if ([_settingsPlist objectForKey:@"CCGrabberTintColor"]) {
+        if (STCCGrabberTintColor)
+            [STCCGrabberTintColor release];
+
+        STCCGrabberTintColor = [NSKeyedUnarchiver unarchiveObjectWithData:[_settingsPlist objectForKey:@"CCGrabberTintColor"]];
+        
+        if ([STCCGrabberTintColor isKindOfClass:[NSNull class]])
+            STCCGrabberTintColor = nil;
+        else
+            [STCCGrabberTintColor retain];
 
     }
 

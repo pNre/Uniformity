@@ -39,10 +39,6 @@
 }
 @end
 
-@interface SBControlCenterContainerView : UIView
-- (SBControlCenterContentContainerView *)contentContainerView;
-@end
-
 @interface SBChevronView : UIView
 @property (nonatomic,retain) UIColor * color;
 @end
@@ -60,6 +56,10 @@
 
 - (id)grabberView;
 
+@end
+
+@interface SBControlCenterContainerView : UIView
+- (SBControlCenterContentContainerView *)contentContainerView;
 @end
 
 @interface SBControlCenterViewController : NSObject {
