@@ -241,6 +241,8 @@
 			<string>UniformityColorSelectorCCTint</string>
 		</dict>
 		<dict>
+			<key>footerText</key>
+			<string>Respring to apply</string>
 			<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>label</key>
