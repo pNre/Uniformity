@@ -93,3 +93,10 @@
 + (id)sharedInstance;
 
 @end
+
+
+@interface UIImage (Flat)
+
+- (UIImage *)_flatImageWithColor:(UIColor *)color;
+
+@end

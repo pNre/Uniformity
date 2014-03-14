@@ -7,7 +7,7 @@ include theos/makefiles/common.mk
 export ARCHS = armv7 armv7s arm64
 
 TWEAK_NAME = Uniformity
-Uniformity_FILES = Tweak.xm UIImage+Colorize.m
+Uniformity_FILES = Tweak.xm
 Uniformity_FRAMEWORKS = UIKit CoreGraphics QuartzCore
 Uniformity_PRIVATE_FRAMEWORKS = SpringBoardUI
 Uniformity_LIBRARIES = substrate

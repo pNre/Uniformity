@@ -243,6 +243,26 @@
 		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>More</string>
+		</dict>
+		<dict>
+			<key>PostNotification</key>
+			<string>com.pNre.uniformity/settingsupdated</string>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.pNre.uniformity</string>
+			<key>key</key>
+			<string>CCThumbColor</string>
+			<key>label</key>
+			<string>Normal color for thumb images</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
 			<key>footerText</key>
 			<string>Uniformity (http://repo.pnre.co)</string>
 			<key>isStaticText</key>

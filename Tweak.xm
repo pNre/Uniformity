@@ -1,7 +1,6 @@
 #import <substrate.h>
 #import <UIKit/UIKit.h>
 
-#import "UIImage+Colorize.h"
 #import "Private.h"
 
 enum {
@@ -28,6 +27,8 @@ static UIColor * STCCForegroundColor = nil;
 static UIColor * STCCHighlightColor = nil;
 static UIColor * STCCTintColor = nil;
 static UIColor * STCCGrabberTintColor = nil;
+
+static BOOL STCCThumbColor = YES;
 
 #define kBackdropNCStyle 0x2B2A
 #define kBackdropCCStyle 0x080C
@@ -60,10 +61,10 @@ static CGFloat   (*original__SBUIControlCenterControlAlphaForState)(int state);
 
     id image = %orig;
 
-    if (!STTweakEnabled || !STCCForegroundColor)
+    if (!STTweakEnabled || (!STCCForegroundColor && STCCThumbColor) || (!STCCHighlightColor && !STCCThumbColor))
         return image;
 
-    return [image imageMaskedWithColor:STCCForegroundColor];
+    return [image _flatImageWithColor:(STCCThumbColor ? STCCForegroundColor : STCCHighlightColor)];
 
 }
 
@@ -305,6 +306,9 @@ static void reloadSettings() {
     if ([_settingsPlist objectForKey:@"CCTintAlpha"])
         STCCTintAlpha = [[_settingsPlist objectForKey:@"CCTintAlpha"] floatValue];
 
+    if ([_settingsPlist objectForKey:@"CCThumbColor"])
+        STCCThumbColor = [[_settingsPlist objectForKey:@"CCThumbColor"] boolValue];
+    
     if ([_settingsPlist objectForKey:@"CCForegroundColor"]) {
 
         if (STCCForegroundColor)
