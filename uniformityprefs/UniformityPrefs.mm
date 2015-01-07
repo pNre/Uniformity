@@ -1,7 +1,9 @@
 #import <Preferences/Preferences.h>
 #import "UniformityPrefs.h"
 
-@implementation UniformityPrefsListController
+@implementation UniformityPrefsListController {
+    BOOL _settingsChanged;
+}
 
 - (id)specifiers {
 	if (!_specifiers)
@@ -27,5 +29,24 @@
     }
 }
 
-@end
+- (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)spec {
 
+    [super setPreferenceValue:value specifier:spec];
+
+	if (!_settingsChanged) {
+		_settingsChanged = YES;
+
+        UIBarButtonItem *respringButton = [[UIBarButtonItem alloc] initWithTitle:@"Respring" style:UIBarButtonItemStyleDone target:self action:@selector(respring:)];
+        [[self navigationItem] setRightBarButtonItem:respringButton];
+        [respringButton release];
+	}
+}
+
+- (void)respring:(id)sender {
+
+    setuid(0);
+    system("killall SpringBoard");
+
+}
+
+@end
