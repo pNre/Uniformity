@@ -55,8 +55,8 @@ extern NSString * PSValueKey;
 
     [specifier setProperty:[NSNull null] forKey:@"color"];
     [specifier setProperty:[self colorSettingKeyName] forKey:@"key"];
-    [specifier setProperty:@"com.pNre.uniformity/settingsupdated" forKey:@"PostNotification"];
-    [specifier setProperty:@"com.pNre.uniformity" forKey:@"defaults"];
+    [specifier setProperty:@"co.pNre.uniformity/settingsupdated" forKey:@"PostNotification"];
+    [specifier setProperty:@"co.pNre.uniformity" forKey:@"defaults"];
 
     return specifier;
 
@@ -74,8 +74,8 @@ extern NSString * PSValueKey;
 
     [specifier setPlaceholder:@"RGB hex value (e.g. FFFFFF)"];
     [specifier setProperty:[self colorSettingKeyName] forKey:@"key"];
-    [specifier setProperty:@"com.pNre.uniformity/settingsupdated" forKey:@"PostNotification"];
-    [specifier setProperty:@"com.pNre.uniformity" forKey:@"defaults"];
+    [specifier setProperty:@"co.pNre.uniformity/settingsupdated" forKey:@"PostNotification"];
+    [specifier setProperty:@"co.pNre.uniformity" forKey:@"defaults"];
     [specifier setProperty:@(YES) forKey:@"noAutoCorrect"];
 
     return specifier;
@@ -169,8 +169,8 @@ extern NSString * PSValueKey;
             [specifier setProperty:[UIImage imageWithColor:obj] forKey:@"iconImage"];
             [specifier setProperty:obj forKey:@"color"];
             [specifier setProperty:[self colorSettingKeyName] forKey:@"key"];
-            [specifier setProperty:@"com.pNre.uniformity/settingsupdated" forKey:@"PostNotification"];
-            [specifier setProperty:@"com.pNre.uniformity" forKey:@"defaults"];
+            [specifier setProperty:@"co.pNre.uniformity/settingsupdated" forKey:@"PostNotification"];
+            [specifier setProperty:@"co.pNre.uniformity" forKey:@"defaults"];
 
             [(NSMutableArray *)_specifiers addObject:specifier];
 

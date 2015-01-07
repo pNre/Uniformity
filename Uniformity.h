@@ -7,3 +7,5 @@
 #else
   #define _L(...)
 #endif
+
+#define kAppId CFSTR("co.pNre.uniformity")

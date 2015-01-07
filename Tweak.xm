@@ -2,6 +2,7 @@
 #import <UIKit/UIKit.h>
 
 #import "Private.h"
+#import "Uniformity.h"
 
 enum {
 
@@ -84,7 +85,7 @@ void SBControlCenterContentContainerViewReplaceBackdrop(SBControlCenterContentCo
     [[_originalBackdrop inputSettings] setColorTintAlpha:STCCTintAlpha];
 
     if ([_originalBackdrop groupName] && [[_originalBackdrop groupName] isEqualToString:@"PNCustomBackdrop"]) {
-        
+
         if (STTweakEnabled) {
 
             reloadBackdrop = !STCCUseNotificationCenterStyle;
@@ -123,7 +124,7 @@ void SBControlCenterContentContainerViewReplaceBackdrop(SBControlCenterContentCo
             [_originalBackdrop setGroupName:@"ControlCenter"];
 
         }
-        
+
         [_originalBackdrop setAppliesOutputSettingsAnimationDuration:1.0];
 
         [view insertSubview:_originalBackdrop atIndex:0];
@@ -206,7 +207,7 @@ CGFloat PN_SBUIControlCenterControlAlphaForState(int state) {
         return STCCContentHighlightedAlpha;
     else if (state == UIControlStateDisabled)
         return STCCContentDisabledAlpha;
-    else 
+    else
         return STCCContentNormalAlpha;
 
 }
@@ -218,7 +219,7 @@ UIColor * PN_SBUIControlCenterControlColorForState(int state) {
 
     if (state == UIControlStateHighlighted) {
         return STCCHighlightColor ?: original__SBUIControlCenterControlColorForState(state);
-    } else 
+    } else
         return STCCForegroundColor ?: original__SBUIControlCenterControlColorForState(state);
 
 }
@@ -229,7 +230,7 @@ NSInteger PN_SBUIControlCenterControlBlendModeForState(int state) {
         return kCGBlendModeNormal;
 
     if (state == UIControlStateNormal || state == UIControlStateDisabled) {
-        
+
         CGFloat scale = [[UIScreen mainScreen] scale];
 
         if (scale >= 2.) {
@@ -281,85 +282,111 @@ static void applyChanges() {
 
 }
 
+//  The return value of this function needs deallocation
+static inline id CFPreferencesValue(NSString * key) {
+    return (id)CFPreferencesCopyAppValue((CFStringRef)key, kAppId);
+}
+
+static inline BOOL CFPreferencesBool(NSString * key, BOOL def) {
+    Boolean found = false;
+    Boolean value = CFPreferencesGetAppBooleanValue((CFStringRef)key, kAppId, &found);
+    return found ? value : def;
+}
+
+static inline NSInteger CFPreferencesInteger(NSString * key, NSInteger def) {
+    Boolean found = false;
+    NSInteger value = (NSInteger)CFPreferencesGetAppIntegerValue((CFStringRef)key, kAppId, &found);
+    return found ? value : def;
+}
+
+static inline CGFloat CFPreferencesFloat(NSString * key, CGFloat def) {
+    NSNumber * value = CFPreferencesValue(key);
+
+    if (!value)
+        return def;
+
+    CGFloat floatValue = [value floatValue];
+    CFRelease(value);
+
+    return floatValue;
+}
+
 static void reloadSettings() {
 
-    NSDictionary * _settingsPlist = [NSDictionary dictionaryWithContentsOfFile:@"/var/mobile/Library/Preferences/com.pNre.uniformity.plist"];
+    _L(@"Reloading settings");
 
-    if ([_settingsPlist objectForKey:@"TweakEnabled"])
-        STTweakEnabled = [[_settingsPlist objectForKey:@"TweakEnabled"] boolValue];
+    STTweakEnabled = CFPreferencesBool(@"TweakEnabled", YES);
+    STCCUseNotificationCenterStyle = CFPreferencesBool(@"CCUseNotificationCenterStyle", NO);
+    STCCGrabberStyle = CFPreferencesInteger(@"CCGrabberStyle", CCGrabberStyleNC);
+    STCCContentNormalAlpha = CFPreferencesFloat(@"CCContentNormalAlpha", 0.4);
+    STCCContentHighlightedAlpha = CFPreferencesFloat(@"CCContentHighlightedAlpha", 0.8);
+    STCCContentDisabledAlpha = CFPreferencesFloat(@"CCContentDisabledAlpha", 0.1);
+    STCCTintAlpha = CFPreferencesFloat(@"CCTintAlpha", 0.1);
+    STCCThumbColor = CFPreferencesBool(@"CCThumbColor", YES);
 
-    if ([_settingsPlist objectForKey:@"CCUseNotificationCenterStyle"])
-        STCCUseNotificationCenterStyle = [[_settingsPlist objectForKey:@"CCUseNotificationCenterStyle"] boolValue];
-    
-    if ([_settingsPlist objectForKey:@"CCGrabberStyle"])
-        STCCGrabberStyle = [[_settingsPlist objectForKey:@"CCGrabberStyle"] integerValue];
+    NSData * archivedData = nil;
 
-    if ([_settingsPlist objectForKey:@"CCContentNormalAlpha"])
-        STCCContentNormalAlpha = [[_settingsPlist objectForKey:@"CCContentNormalAlpha"] floatValue];
-
-    if ([_settingsPlist objectForKey:@"CCContentHighlightedAlpha"])
-        STCCContentHighlightedAlpha = [[_settingsPlist objectForKey:@"CCContentHighlightedAlpha"] floatValue];
-    
-    if ([_settingsPlist objectForKey:@"CCContentDisabledAlpha"])
-        STCCContentDisabledAlpha = [[_settingsPlist objectForKey:@"CCContentDisabledAlpha"] floatValue];
-
-    if ([_settingsPlist objectForKey:@"CCTintAlpha"])
-        STCCTintAlpha = [[_settingsPlist objectForKey:@"CCTintAlpha"] floatValue];
-
-    if ([_settingsPlist objectForKey:@"CCThumbColor"])
-        STCCThumbColor = [[_settingsPlist objectForKey:@"CCThumbColor"] boolValue];
-    
-    if ([_settingsPlist objectForKey:@"CCForegroundColor"]) {
+    if ((archivedData = (NSData *)CFPreferencesValue(@"CCForegroundColor"))) {
 
         if (STCCForegroundColor)
             [STCCForegroundColor release];
 
-        STCCForegroundColor = [NSKeyedUnarchiver unarchiveObjectWithData:[_settingsPlist objectForKey:@"CCForegroundColor"]];
-        
+        STCCForegroundColor = [NSKeyedUnarchiver unarchiveObjectWithData:archivedData];
+
         if ([STCCForegroundColor isKindOfClass:[NSNull class]])
             STCCForegroundColor = STTweakEnabled && STCCUseNotificationCenterStyle ? [[UIColor colorWithWhite:0.90 alpha:1.] retain] : nil;
         else
             [STCCForegroundColor retain];
 
+        CFRelease(archivedData);
+
     }
 
-    if ([_settingsPlist objectForKey:@"CCHighlightColor"]) {
+    if ((archivedData = (NSData *)CFPreferencesValue(@"CCHighlightColor"))) {
 
         if (STCCHighlightColor)
             [STCCHighlightColor release];
 
-        STCCHighlightColor = [NSKeyedUnarchiver unarchiveObjectWithData:[_settingsPlist objectForKey:@"CCHighlightColor"]];
+        STCCHighlightColor = [NSKeyedUnarchiver unarchiveObjectWithData:archivedData];
 
         if ([STCCHighlightColor isKindOfClass:[NSNull class]])
             STCCHighlightColor = nil;
         else
             [STCCHighlightColor retain];
 
+        CFRelease(archivedData);
+
     }
 
-    if ([_settingsPlist objectForKey:@"CCTintColor"]) {
+    if ((archivedData = (NSData *)CFPreferencesValue(@"CCTintColor"))) {
+
         if (STCCTintColor)
             [STCCTintColor release];
 
-        STCCTintColor = [NSKeyedUnarchiver unarchiveObjectWithData:[_settingsPlist objectForKey:@"CCTintColor"]];
-        
+        STCCTintColor = [NSKeyedUnarchiver unarchiveObjectWithData:archivedData];
+
         if ([STCCTintColor isKindOfClass:[NSNull class]])
             STCCTintColor = nil;
         else
             [STCCTintColor retain];
 
+        CFRelease(archivedData);
+
     }
 
-    if ([_settingsPlist objectForKey:@"CCGrabberTintColor"]) {
+    if ((archivedData = (NSData *)CFPreferencesValue(@"CCGrabberTintColor"))) {
+
         if (STCCGrabberTintColor)
             [STCCGrabberTintColor release];
 
-        STCCGrabberTintColor = [NSKeyedUnarchiver unarchiveObjectWithData:[_settingsPlist objectForKey:@"CCGrabberTintColor"]];
-        
+        STCCGrabberTintColor = [NSKeyedUnarchiver unarchiveObjectWithData:archivedData];
+
         if ([STCCGrabberTintColor isKindOfClass:[NSNull class]])
             STCCGrabberTintColor = nil;
         else
             [STCCGrabberTintColor retain];
+
+        CFRelease(archivedData);
 
     }
 
@@ -379,10 +406,10 @@ static void reloadSettingsNotification(CFNotificationCenterRef notificationCente
     MSHookFunction((void *)_SBUIControlCenterControlBlendModeForState, (void *)PN_SBUIControlCenterControlBlendModeForState, (void **)NULL);
     MSHookFunction(_SBUIControlCenterControlColorForState, PN_SBUIControlCenterControlColorForState, &original__SBUIControlCenterControlColorForState);
     MSHookFunction(_SBUIControlCenterControlAlphaForState, PN_SBUIControlCenterControlAlphaForState, &original__SBUIControlCenterControlAlphaForState);
-    
+
     NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
 
-    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)reloadSettingsNotification, CFSTR("com.pNre.uniformity/settingsupdated"), NULL, CFNotificationSuspensionBehaviorCoalesce);
+    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)reloadSettingsNotification, CFSTR("co.pNre.uniformity/settingsupdated"), NULL, CFNotificationSuspensionBehaviorCoalesce);
 
     reloadSettings();
 
@@ -391,4 +418,3 @@ static void reloadSettingsNotification(CFNotificationCenterRef notificationCente
     [pool release];
 
 }
-
