@@ -215,8 +215,7 @@ static void SBControlCenterGrabberViewStyle(SBChevronView * chevronView) {
     CGRect glyphRect = [self _rectForGlyph:glyphImage centeredInRect:[self bounds]];
 
     UIImageView * _glyphImageView = MSHookIvar<UIImageView *>(self, "_glyphImageView");
-
-    [[_glyphImageView layer] setCompositingFilter:![self _drawingAsSelected] ? kCAFilterPlusD : nil];
+    [[_glyphImageView layer] setCompositingFilter:nil];
 
     _glyphImageView.image = glyphImage;
     _glyphImageView.frame = glyphRect;
