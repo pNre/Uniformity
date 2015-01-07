@@ -1,7 +1,7 @@
 Uniformity
 ============
 
-Customize control center appearance.
+Small CydiaSubstrate tweak to customize the control center appearance (in iOS7 and iOS8).
 
 ---
 
