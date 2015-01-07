@@ -34,11 +34,15 @@ static BOOL STCCThumbColor = YES;
 #define kBackdropNCStyle 0x2B2A
 #define kBackdropCCStyle 0x080C
 
+extern "C" NSString * const kCAFilterPlusD;
+
 extern "C" void                      _SBControlCenterControlSettingsDidChangeForKey(NSString * key);
 extern "C" UIColor *                 _SBUIControlCenterControlColorForState(int state);
 extern "C" NSInteger                 _SBUIControlCenterControlBlendModeForState(int state);
 extern "C" CGFloat                   _SBUIControlCenterControlAlphaForState(int state);
 extern "C" SBControlCenterSettings * _SBControlCenterSettings(void);
+
+extern "C" void                      SBUIControlCenterControlConfigureForState(int state);
 
 static UIColor * (*original__SBUIControlCenterControlColorForState)(int state);
 static CGFloat   (*original__SBUIControlCenterControlAlphaForState)(int state);
@@ -198,7 +202,36 @@ static void SBControlCenterGrabberViewStyle(SBChevronView * chevronView) {
 
 %end
 
+%hook SBUIControlCenterButton
+
+- (void)_updateGlyphForStateChange {
+
+    if (!STTweakEnabled)
+        return %orig;
+
+    NSInteger currentState = [self _currentState];
+    UIImage * glyphImage = [[self _glyphImageForState:currentState] _flatImageWithColor:_SBUIControlCenterControlColorForState(currentState)];
+
+    CGRect glyphRect = [self _rectForGlyph:glyphImage centeredInRect:[self bounds]];
+
+    UIImageView * _glyphImageView = MSHookIvar<UIImageView *>(self, "_glyphImageView");
+
+    [[_glyphImageView layer] setCompositingFilter:![self _drawingAsSelected] ? kCAFilterPlusD : nil];
+
+    _glyphImageView.image = glyphImage;
+    _glyphImageView.frame = glyphRect;
+
+    SBControlCenterSettings * settings = _SBControlCenterSettings();
+
+    _glyphImageView.alpha = [settings controlAlpha];
+
+}
+
+%end
+
 CGFloat PN_SBUIControlCenterControlAlphaForState(int state) {
+
+    _L(@"Control center control alpha for state %d", state);
 
     if (!STTweakEnabled || !SettingsLoaded)
         return original__SBUIControlCenterControlAlphaForState(state);
@@ -217,6 +250,8 @@ UIColor * PN_SBUIControlCenterControlColorForState(int state) {
     if (!STTweakEnabled || !SettingsLoaded)
         return original__SBUIControlCenterControlColorForState(state);
 
+    _L(@"Control center color for state %d", state);
+
     if (state == UIControlStateHighlighted) {
         return STCCHighlightColor ?: original__SBUIControlCenterControlColorForState(state);
     } else
@@ -225,6 +260,8 @@ UIColor * PN_SBUIControlCenterControlColorForState(int state) {
 }
 
 NSInteger PN_SBUIControlCenterControlBlendModeForState(int state) {
+
+    _L(@"Blend mode for state %d", state);
 
     if (STTweakEnabled && SettingsLoaded)
         return kCGBlendModeNormal;

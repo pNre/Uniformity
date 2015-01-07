@@ -32,6 +32,8 @@
 
 @property BOOL highlightUsesPlusL;
 
+@property CGFloat controlAlpha;
+
 @end
 
 @interface SBControlCenterContentContainerView : UIView {
@@ -94,6 +96,20 @@
 
 @end
 
+@interface SBUIControlCenterButton : UIView
+
+- (NSInteger)_currentState;
+- (UIImage *)_glyphImageForState:(NSInteger)state;
+
+- (CGRect)_rectForGlyph:(id)glyph centeredInRect:(CGRect)rect;
+
+- (BOOL)isCircleButton;
+- (BOOL)useSmallButton;
+- (BOOL)isRectButton;
+
+- (BOOL)_drawingAsSelected;
+
+@end
 
 @interface UIImage (Flat)
 
