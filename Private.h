@@ -1,3 +1,5 @@
+UIKIT_EXTERN NSBundle * SpringBoardUIBundle(void);
+
 @interface UIView (Blend)
 
 - (void)_setDrawsAsBackdropOverlayWithBlendMode:(CGBlendMode)blendMode;
@@ -30,9 +32,34 @@
 
 @interface SBControlCenterSettings : NSObject
 
-@property BOOL highlightUsesPlusL;
+@property (assign) double controlAlpha;
+@property (assign) double controlAlpha1x;
+@property (assign) double minControlAlpha;
+@property (assign) double maxControlAlpha;
+@property (assign) double disabledAlpha;
+@property (assign) double disabledAlpha1x;
+@property (assign) double highlightAlpha;
+@property (assign) BOOL highlightUsesPlusL;
+@property (assign) BOOL forceVibrantControls;
+@property (assign) double glowAlpha;
+@property (retain) UIColor * highlightColor;
+@property (assign) BOOL useNewBounce;
+@property (assign) double oldBounceFriction;
+@property (assign) double bounceDensityFactor;
+@property (assign) double bounceResistance;
+@property (assign) double minVelocity;
+@property (assign) double maxVelocity;
+@property (assign) double attachmentThreshold;
+@property (assign) double attachmentFrequencyAbove;
+@property (assign) double attachmentFrequencyBelow;
+@property (assign) double attachmentVelocityDamping;
+@property (assign) double attachmentMinDamping;
+@property (assign) double attachmentMaxDamping;
+@property (assign) double backgroundAlphaFactor;
 
-@property CGFloat controlAlpha;
++ (id)settingsControllerModule;
+
+- (void)settings:(id)settings changedValueForKeyPath:(id)keyPath;
 
 @end
 
@@ -54,7 +81,9 @@
 }
 
 - (void)updateEnabledSections;
+
 - (id)_allSections;
+- (id)settingsSection;
 
 - (id)grabberView;
 
@@ -64,18 +93,23 @@
 - (SBControlCenterContentContainerView *)contentContainerView;
 @end
 
-@interface SBControlCenterViewController : NSObject {
+@interface SBControlCenterViewController : UIViewController {
     SBControlCenterContainerView * _containerView;
     SBControlCenterContentView * _contentView;
 }
 @end
 
-@interface SBControlCenterController : NSObject {
+@interface SBControlCenterController : UIViewController {
     SBControlCenterViewController * _viewController;
 }
 
+- (void)addObserver:(id)observer;
+- (void)removeObserver:(id)observer;
+
 + (id)sharedInstanceIfExists;
 + (id)sharedInstance;
+
+- (void)_enumerateObservers:(/*^block*/id)enumerator;
 
 @end
 
@@ -96,7 +130,7 @@
 
 @end
 
-@interface SBUIControlCenterButton : UIView
+@interface SBUIControlCenterButton : UIButton
 
 - (NSInteger)_currentState;
 - (UIImage *)_glyphImageForState:(NSInteger)state;
@@ -111,7 +145,16 @@
 
 @end
 
-@interface UIImage (Flat)
+@interface SBUIControlCenterSlider : UISlider
+
+- (void)controlAppearanceDidChangeForState:(NSInteger)state;
+
+@end
+
+
+@interface UIImage (Flat_and_Bundle)
+
++ (id)imageNamed:(NSString *)name inBundle:(NSBundle *)bundle;
 
 - (UIImage *)_flatImageWithColor:(UIColor *)color;
 

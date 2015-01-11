@@ -7,7 +7,7 @@ TARGET = iphone:clang::7.0
 
 include theos/makefiles/common.mk
 
-export ARCHS = armv7 armv7s arm64
+export ARCHS = armv7 arm64
 
 TWEAK_NAME = Uniformity
 Uniformity_FILES = Tweak.xm

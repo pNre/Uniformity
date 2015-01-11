@@ -82,13 +82,16 @@ void SBControlCenterContentContainerViewReplaceBackdrop(SBControlCenterContentCo
     if (!_originalBackdrop)
         return;
 
+    if ([[_originalBackdrop groupName] isEqualToString:@"ControlCenter"] && !STTweakEnabled)
+        return;
+
     BOOL reloadBackdrop = NO;
     BOOL _useNCStyle = STCCUseNotificationCenterStyle;
 
     [[_originalBackdrop inputSettings] setColorTint:STCCTintColor];
     [[_originalBackdrop inputSettings] setColorTintAlpha:STCCTintAlpha];
 
-    if ([_originalBackdrop groupName] && [[_originalBackdrop groupName] isEqualToString:@"PNCustomBackdrop"]) {
+    if ([[_originalBackdrop groupName] isEqualToString:@"PNCustomBackdrop"]) {
 
         if (STTweakEnabled) {
 
@@ -101,7 +104,7 @@ void SBControlCenterContentContainerViewReplaceBackdrop(SBControlCenterContentCo
 
         }
 
-    } else if ([_originalBackdrop groupName] && [[_originalBackdrop groupName] isEqualToString:@"ControlCenter"]) {
+    } else if ([[_originalBackdrop groupName] isEqualToString:@"ControlCenter"]) {
 
         reloadBackdrop = STCCUseNotificationCenterStyle && STTweakEnabled;
 
@@ -162,7 +165,7 @@ static void SBControlCenterGrabberViewStyle(SBChevronView * chevronView) {
     if (!chevronView)
         return;
 
-    if (STCCGrabberStyle == CCGrabberStyleTint && !STCCGrabberTintColor)
+    if ((STCCGrabberStyle == CCGrabberStyleTint && !STCCGrabberTintColor) || !STTweakEnabled)
         STCCGrabberStyle = CCGrabberStyleDefault;
 
     [chevronView setHidden:NO];
@@ -217,12 +220,13 @@ static void SBControlCenterGrabberViewStyle(SBChevronView * chevronView) {
     UIImageView * _glyphImageView = MSHookIvar<UIImageView *>(self, "_glyphImageView");
     [[_glyphImageView layer] setCompositingFilter:nil];
 
-    _glyphImageView.image = glyphImage;
     _glyphImageView.frame = glyphRect;
+    _glyphImageView.image = glyphImage;
 
-    SBControlCenterSettings * settings = _SBControlCenterSettings();
-
-    _glyphImageView.alpha = [settings controlAlpha];
+    if (![self isEnabled])
+        _glyphImageView.alpha = STCCContentDisabledAlpha;
+    else
+        _glyphImageView.alpha = [self _drawingAsSelected] ? STCCContentHighlightedAlpha : STCCContentNormalAlpha;
 
 }
 
@@ -289,32 +293,18 @@ NSInteger PN_SBUIControlCenterControlBlendModeForState(int state) {
 static void applyChanges() {
 
     //  Control center
-
     SBControlCenterController * ccController = [%c(SBControlCenterController) sharedInstanceIfExists];
 
     if (ccController)  {
-
+        UIView * _rootView = MSHookIvar<UIView *>(ccController, "_rootView");
         SBControlCenterViewController * _viewController = MSHookIvar<SBControlCenterViewController *>(ccController, "_viewController");
 
-        if (_viewController) {
+        [ccController removeObserver:_viewController];
+        ccController.view = nil;
 
-            SBControlCenterContainerView * _containerView = MSHookIvar<SBControlCenterContainerView *>(_viewController, "_containerView");
-            SBControlCenterContentContainerView * contentContainerView = [_containerView contentContainerView];
-
-            SBControlCenterContentContainerViewReplaceBackdrop(contentContainerView);
-
-            SBControlCenterContentView * _contentView = MSHookIvar<SBControlCenterContentView *>(_viewController, "_contentView");
-
-            if (_contentView && [_contentView grabberView])
-                SBControlCenterGrabberViewStyle([[_contentView grabberView] chevronView]);
-
-        }
-
+        [_rootView removeFromSuperview];
+        [_rootView release];
     }
-
-    _SBControlCenterControlSettingsDidChangeForKey(@"highlight");
-    _SBControlCenterControlSettingsDidChangeForKey(@"highlightColor");
-    _SBControlCenterControlSettingsDidChangeForKey(@"controlAlpha");
 
 }
 
