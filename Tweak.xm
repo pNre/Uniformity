@@ -314,8 +314,9 @@ static void applyChanges() {
         [ccController removeObserver:_viewController];
         ccController.view = nil;
 
+        _viewController.view = nil;
+
         [_rootView removeFromSuperview];
-        [_rootView release];
     }
 
 }
