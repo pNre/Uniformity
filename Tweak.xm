@@ -73,6 +73,18 @@ static CGFloat   (*original__SBUIControlCenterControlAlphaForState)(int state);
 
 }
 
+- (void)layoutSubviews {
+    %orig;
+
+    if (!STTweakEnabled)
+        return;
+
+    UIView * _thumbView = MSHookIvar<UIView *>(self, "_thumbView");
+    CGRect frame = _thumbView.frame;
+    frame.origin.x += 7.5f;
+    _thumbView.frame = frame;
+}
+
 %end
 
 void SBControlCenterContentContainerViewReplaceBackdrop(SBControlCenterContentContainerView * view) {
