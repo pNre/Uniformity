@@ -60,9 +60,15 @@ static CGFloat   (*original__SBUIControlCenterControlAlphaForState)(int state);
 
 %end
 
+@interface SBUIControlCenterSlider (Uniformity)
+
+- (void)fixThumbView;
+
+@end
+
 %hook SBUIControlCenterSlider
 
-+ (id)_knobImage {
++ (UIImage *)_knobImage {
 
     id image = %orig;
 
@@ -73,16 +79,26 @@ static CGFloat   (*original__SBUIControlCenterControlAlphaForState)(int state);
 
 }
 
+%new
+- (void)fixThumbView {
+    UIView * _thumbView = MSHookIvar<UIView *>(self, "_thumbView");
+    CGRect frame = _thumbView.frame;
+    frame.origin.x += [%c(SBUIControlCenterSlider) _knobImage].size.width / 2.f;
+    _thumbView.frame = frame;
+}
+
 - (void)layoutSubviews {
     %orig;
 
-    if (!STTweakEnabled)
-        return;
+    if (STTweakEnabled)
+        [self fixThumbView];
+}
 
-    UIView * _thumbView = MSHookIvar<UIView *>(self, "_thumbView");
-    CGRect frame = _thumbView.frame;
-    frame.origin.x += 7.5f;
-    _thumbView.frame = frame;
+- (void)_initSubviews {
+    %orig;
+
+    if (STTweakEnabled)
+        [self fixThumbView];
 }
 
 %end

@@ -147,6 +147,8 @@ UIKIT_EXTERN NSBundle * SpringBoardUIBundle(void);
 
 @interface SBUIControlCenterSlider : UISlider
 
++ (UIImage *)_knobImage;
+
 - (void)controlAppearanceDidChangeForState:(NSInteger)state;
 
 @end
