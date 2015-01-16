@@ -34,8 +34,6 @@ static BOOL STCCThumbColor = YES;
 #define kBackdropNCStyle 0x2B2A
 #define kBackdropCCStyle 0x080C
 
-extern "C" NSString * const kCAFilterPlusD;
-
 extern "C" void                      _SBControlCenterControlSettingsDidChangeForKey(NSString * key);
 extern "C" UIColor *                 _SBUIControlCenterControlColorForState(int state);
 extern "C" NSInteger                 _SBUIControlCenterControlBlendModeForState(int state);
@@ -62,11 +60,36 @@ static CGFloat   (*original__SBUIControlCenterControlAlphaForState)(int state);
 
 @interface SBUIControlCenterSlider (Uniformity)
 
++ (UIImage *)_cachedMinTrackImageSet:(BOOL)set forState:(NSUInteger)state;
+
 - (void)fixThumbView;
 
 @end
 
 %hook SBUIControlCenterSlider
+
+%new
++ (UIImage *)_cachedMinTrackImageSet:(BOOL)set forState:(NSUInteger)state {
+    static UIImage * _minTrackImages[2] = {nil, nil};
+
+    state = state > 1 ? 1 : state;
+
+    if (set || !_minTrackImages[state]) {
+        [_minTrackImages[state] release];
+        _minTrackImages[state] = [[%c(SBUIControlCenterSlider) _createTrackImageForState:state] retain];
+    }
+
+    return _minTrackImages[state];
+}
+
++ (UIImage *)_minTrackImageForState:(NSInteger)state {
+
+    if (!STTweakEnabled)
+        return %orig;
+
+    return [%c(SBUIControlCenterSlider) _cachedMinTrackImageSet:NO forState:state];
+
+}
 
 + (UIImage *)_knobImage {
 
@@ -81,10 +104,14 @@ static CGFloat   (*original__SBUIControlCenterControlAlphaForState)(int state);
 
 %new
 - (void)fixThumbView {
+
     UIView * _thumbView = MSHookIvar<UIView *>(self, "_thumbView");
+    UIView * _minTrackView = MSHookIvar<UIView *>(self, "_minTrackView");
+
     CGRect frame = _thumbView.frame;
-    frame.origin.x += [%c(SBUIControlCenterSlider) _knobImage].size.width / 2.f;
+    frame.origin.x = _minTrackView.frame.origin.x + _minTrackView.frame.size.width - 2.f;
     _thumbView.frame = frame;
+
 }
 
 - (void)layoutSubviews {
@@ -262,8 +289,6 @@ static void SBControlCenterGrabberViewStyle(SBChevronView * chevronView) {
 
 CGFloat PN_SBUIControlCenterControlAlphaForState(int state) {
 
-    _L(@"Control center control alpha for state %d", state);
-
     if (!STTweakEnabled || !SettingsLoaded)
         return original__SBUIControlCenterControlAlphaForState(state);
 
@@ -281,8 +306,6 @@ UIColor * PN_SBUIControlCenterControlColorForState(int state) {
     if (!STTweakEnabled || !SettingsLoaded)
         return original__SBUIControlCenterControlColorForState(state);
 
-    _L(@"Control center color for state %d", state);
-
     if (state == UIControlStateHighlighted) {
         return STCCHighlightColor ?: original__SBUIControlCenterControlColorForState(state);
     } else
@@ -291,8 +314,6 @@ UIColor * PN_SBUIControlCenterControlColorForState(int state) {
 }
 
 NSInteger PN_SBUIControlCenterControlBlendModeForState(int state) {
-
-    _L(@"Blend mode for state %d", state);
 
     if (STTweakEnabled && SettingsLoaded)
         return kCGBlendModeNormal;
@@ -318,17 +339,36 @@ NSInteger PN_SBUIControlCenterControlBlendModeForState(int state) {
 
 }
 
+static void updateSliders(UIView * v) {
+    /*if ([v isKindOfClass:%c(SBUIControlCenterSlider)]) {
+        _L(@"Found one");
+        [(SBUIControlCenterSlider *)v _updateMinimumTrackImage];
+        [(SBUIControlCenterSlider *)v _updateMaximumTrackImage];
+        [(SBUIControlCenterSlider *)v _updateMinimumValueImage];
+        [(SBUIControlCenterSlider *)v _updateMaximumValueImage];
+        [(SBUIControlCenterSlider *)v setMinimumValueImage:[%c(SBUIControlCenterSlider) _minTrackImageForState:[(SBUIControlCenterSlider *)v state]]];
+    }
+
+    for (UIView * subview in [v subviews])
+        updateSliders(subview);*/
+}
+
 static void applyChanges() {
 
     //  Control center
     SBControlCenterController * ccController = [%c(SBControlCenterController) sharedInstanceIfExists];
 
     if (ccController)  {
+        [%c(SBUIControlCenterSlider) _cachedMinTrackImageSet:YES forState:0];
+        [%c(SBUIControlCenterSlider) _cachedMinTrackImageSet:YES forState:1];
+
         UIView * _rootView = MSHookIvar<UIView *>(ccController, "_rootView");
         SBControlCenterViewController * _viewController = MSHookIvar<SBControlCenterViewController *>(ccController, "_viewController");
 
         [ccController removeObserver:_viewController];
         ccController.view = nil;
+
+        updateSliders(_viewController.view);
 
         _viewController.view = nil;
 

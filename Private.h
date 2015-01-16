@@ -148,8 +148,18 @@ UIKIT_EXTERN NSBundle * SpringBoardUIBundle(void);
 @interface SBUIControlCenterSlider : UISlider
 
 + (UIImage *)_knobImage;
++ (UIImage *)_minTrackImageForState:(NSInteger)state;
++ (UIImage *)_createTrackImageForState:(NSInteger)state;
 
 - (void)controlAppearanceDidChangeForState:(NSInteger)state;
+
+- (void)_updateMinimumTrackImage;
+- (void)_updateMaximumTrackImage;
+- (void)_updateMinimumValueImage;
+- (void)_updateMaximumValueImage;
+
+- (void)setMinimumValueImage:(UIImage *)image;
+- (void)setMaximumValueImage:(UIImage *)image;
 
 @end
 
