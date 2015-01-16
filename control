@@ -1,11 +1,11 @@
-Package: co.pNre.uniformity
-Name: Uniformity
-Depends: mobilesubstrate, preferenceloader, firmware (>= 7)
-Version: 0.0.2
+Package: co.pNre.uniformity2
+Name: Uniformity2
+Depends: mobilesubstrate, preferenceloader, firmware (>= 8)
+Version: 0.2.0
 Architecture: iphoneos-arm
 Description: Customize control center appearance.
-Depiction: http://repo.pnre.co/depics/uniformity/
+Depiction: http://repo.pnre.co/tweaks/5/
 Maintainer: pNre <pnre00+uniformity@gmail.com>
 Author: pNre <pnre00+uniformity@gmail.com>
 Section: Tweaks
-Icon: file:///Library/PreferenceBundles/UniformityPrefs.bundle/Uniformity@2x.png
+Icon: file:///Library/PreferenceBundles/UniformityPrefs.bundle/Uniformity@3x.png
